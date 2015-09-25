@@ -66,8 +66,8 @@ data.fatalities <- aggregate(data.noaa$FATALITIES, by=list(data.noaa$EVTYPE), su
 data.injuries <- aggregate(data.noaa$INJURIES, by=list(data.noaa$EVTYPE), sum)
 
 # Rename the columns
-colnames(data.fatalities) <- c("EVTYPE","Count")
-colnames(data.injuries) <- c("EVTYPE","Count")
+colnames(data.fatalities) <- c("Event","Count")
+colnames(data.injuries) <- c("Event","Count")
 
 # Sort the data 
 data.fatalities.sorted <- arrange(data.fatalities, data.fatalities$Count,

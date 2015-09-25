@@ -1,8 +1,6 @@
-# Examining the Impact of Severe Wheather Events from 1950 - 2011
+# Examining the Impact of Severe Weather Events from 1950 - 2011
 Jack Gidding  
 September 24, 2015  
-
-[Synopsis]
 
 A key concern of governments is the well being of its citizens. Storms and other severe weather events can cause both public health and economic problems for communities and municipalities. Weather events can result in fatalities, injuries, and property damage. Preventing such outcomes should be addressed by government in terms of public policy. In order to set the right policy in this area, we must answer two questions. First, which types of events are most harmful with repect to the population? Second, which types of events have the greatest economic impact? To answer these questions for the United States, we examine data from the U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database.
 
@@ -76,8 +74,8 @@ data.fatalities <- aggregate(data.noaa$FATALITIES, by=list(data.noaa$EVTYPE), su
 data.injuries <- aggregate(data.noaa$INJURIES, by=list(data.noaa$EVTYPE), sum)
 
 # Rename the columns
-colnames(data.fatalities) <- c("EVTYPE","Count")
-colnames(data.injuries) <- c("EVTYPE","Count")
+colnames(data.fatalities) <- c("Event","Count")
+colnames(data.injuries) <- c("Event","Count")
 
 # Sort the data 
 data.fatalities.sorted <- arrange(data.fatalities, data.fatalities$Count,
@@ -95,7 +93,7 @@ head(data.fatalities.sorted, n=10)
 ```
 
 ```
-##            EVTYPE Count
+##             Event Count
 ## 1         TORNADO  5633
 ## 2  EXCESSIVE HEAT  1903
 ## 3     FLASH FLOOD   978
@@ -116,7 +114,7 @@ head(data.injuries.sorted, n=10)
 ```
 
 ```
-##               EVTYPE Count
+##                Event Count
 ## 1            TORNADO 91346
 ## 2          TSTM WIND  6957
 ## 3              FLOOD  6789
