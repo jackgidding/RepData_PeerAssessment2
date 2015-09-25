@@ -1,0 +1,7 @@
+---
+title: "Examining the Impact of Severe Wheather Events from 1950 - 2011"
+author: "Jack Gidding"
+date: "September 24, 2015"
+output: html_document
+---
+
