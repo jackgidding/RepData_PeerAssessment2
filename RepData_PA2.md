@@ -12,9 +12,11 @@ Load the libraries that will be used in the analysis.
 library(R.utils)
 library(lubridate)
 library(plyr)
+library(ggplot2)
 ```
 
 The NOAA storm data is loaded into the environment for processing. The bzipped datafile is stored in the GitHub repository. If the csv data file does not exist, then data data is unzipped and verified. 
+
 
 ```r
 filename.data <- "repdata-data-StormData.csv"
@@ -82,6 +84,8 @@ data.fatalities.sorted <- arrange(data.fatalities, data.fatalities$Count,
                                   decreasing=TRUE)
 data.injuries.sorted <- arrange(data.injuries, data.injuries$Count,
                                   decreasing=TRUE)
+colnames(data.fatalities.sorted) <- c("Event","Count")
+colnames(data.injuries.sorted) <- c("Event","Count")
 ```
 Once we have the data summarized and sorted, we can derive top 10 lists of weather related causes of fatalities and injuries. 
 
@@ -89,7 +93,9 @@ Once we have the data summarized and sorted, we can derive top 10 lists of weath
 
 
 ```r
-head(data.fatalities.sorted, n=10)
+data.fatalities.top10 <- head(data.fatalities.sorted, n=10)
+colnames(data.fatalities.top10) <- c("Event","Count")
+data.fatalities.top10
 ```
 
 ```
@@ -110,7 +116,9 @@ head(data.fatalities.sorted, n=10)
 
 
 ```r
-head(data.injuries.sorted, n=10)
+data.injuries.top10 <- head(data.injuries.sorted, n=10)
+colnames(data.injuries.top10) <- c("Event","Count")
+data.injuries.top10
 ```
 
 ```
@@ -126,4 +134,30 @@ head(data.injuries.sorted, n=10)
 ## 9  THUNDERSTORM WIND  1488
 ## 10              HAIL  1361
 ```
+#### Plot comparing Fatalities and Injuries
 
+Next, the top 10 causes of fatalities and injuries are plotted side-by-side on the same chart to show the relative magnitude.  
+
+
+```r
+# Add column to identify fatalities
+data.fatalities.top10[ ,3] <- "Fatalities"
+colnames(data.fatalities.top10) <- c("Event","Count", "Outcome")
+
+# Add column to identify injuries
+data.injuries.top10[ ,3] <- "Injuries"
+colnames(data.injuries.top10) <- c("Event","Count", "Outcome")
+
+# Combine fatalities and injuries into same data.frame
+data.combined.top10 <- rbind(data.fatalities.top10, data.injuries.top10)
+
+ggplot(data.combined.top10, aes(x=reorder(Event, desc(Count)), y=Count, fill=Outcome)) + 
+    geom_bar(stat="identity", position="dodge") +
+    labs(x="Event", y="Count") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+    labs(title="Top 10 Causes of Injuries and Fatalities\ndue to Severe Weather, 1950 - 2011")
+```
+
+![](RepData_PA2_files/figure-html/publicimpactplot-1.png) 
+
+In the plot above, we can see that the top two causes of fatalities are tornado and excessive heat. The top two causes of injuries are tornado and tstm wind. The number of injuries with the top event, tornado, are 16.2 times that of fatalities. 

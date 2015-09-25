@@ -17,9 +17,11 @@ Load the libraries that will be used in the analysis.
 library(R.utils)
 library(lubridate)
 library(plyr)
+library(ggplot2)
 ```
 
 The NOAA storm data is loaded into the environment for processing. The bzipped datafile is stored in the GitHub repository. If the csv data file does not exist, then data data is unzipped and verified. 
+
 ```{r data, cache=TRUE}
 filename.data <- "repdata-data-StormData.csv"
 if (!file.exists(filename.data)) {
@@ -74,6 +76,8 @@ data.fatalities.sorted <- arrange(data.fatalities, data.fatalities$Count,
                                   decreasing=TRUE)
 data.injuries.sorted <- arrange(data.injuries, data.injuries$Count,
                                   decreasing=TRUE)
+colnames(data.fatalities.sorted) <- c("Event","Count")
+colnames(data.injuries.sorted) <- c("Event","Count")
 
 ```
 Once we have the data summarized and sorted, we can derive top 10 lists of weather related causes of fatalities and injuries. 
@@ -81,12 +85,40 @@ Once we have the data summarized and sorted, we can derive top 10 lists of weath
 #### Top 10 Causes of Fatalities
 
 ```{r fatalities}
-head(data.fatalities.sorted, n=10)
+data.fatalities.top10 <- head(data.fatalities.sorted, n=10)
+colnames(data.fatalities.top10) <- c("Event","Count")
+data.fatalities.top10
 ```
 
 #### Top 10 Causes of Injuries
 
 ```{r injuries}
-head(data.injuries.sorted, n=10)
+data.injuries.top10 <- head(data.injuries.sorted, n=10)
+colnames(data.injuries.top10) <- c("Event","Count")
+data.injuries.top10
+
+```
+#### Plot comparing Fatalities and Injuries
+
+Next, the top 10 causes of fatalities and injuries are plotted side-by-side on the same chart to show the relative magnitude.  
+
+```{r publicimpactplot}
+# Add column to identify fatalities
+data.fatalities.top10[ ,3] <- "Fatalities"
+colnames(data.fatalities.top10) <- c("Event","Count", "Outcome")
+
+# Add column to identify injuries
+data.injuries.top10[ ,3] <- "Injuries"
+colnames(data.injuries.top10) <- c("Event","Count", "Outcome")
+
+# Combine fatalities and injuries into same data.frame
+data.combined.top10 <- rbind(data.fatalities.top10, data.injuries.top10)
+
+ggplot(data.combined.top10, aes(x=reorder(Event, desc(Count)), y=Count, fill=Outcome)) + 
+    geom_bar(stat="identity", position="dodge") +
+    labs(x="Event", y="Count") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+    labs(title="Top 10 Causes of Injuries and Fatalities\ndue to Severe Weather, 1950 - 2011")
 ```
 
+In the plot above, we can see that the top two causes of fatalities are `r tolower(data.fatalities.top10[1,1])` and `r tolower(data.fatalities.top10[2,1])`. The top two causes of injuries are `r tolower(data.injuries.top10[1,1])` and `r tolower(data.injuries.top10[2,1])`. The number of injuries with the top event, `r tolower(data.fatalities.top10[1,1])`, are `r round(data.injuries.top10[1,2]/data.fatalities.top10[1,2],1)` times that of fatalities. 
