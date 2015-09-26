@@ -43,7 +43,18 @@ length(data.noaa)
 
 ```
 
-There are `r format(round(nrow(data.noaa),0),big.mark=",")` events in the database and `r format(round(length(data.noaa),0),big.mark=",")` characteristics of each event. 
+There are `r format(round(nrow(data.noaa),0),big.mark=",")` events in the database and `r format(round(length(data.noaa),0),big.mark=",")` fields/characteristics of each event. The fields that will be used during this report are:
+
+- EVTYPE: The reported event type.
+- BGN_DATE: The start date of the event. Used as the event date.
+- FATALITIES: Quantity of fatalities due to the event.
+- INJURIES: Quantity of injured persons due to the event.
+- PROPDMG: Damage to property in US Dollars.
+- PROPDMGEXP: the magnitude of the PROPDMG field.
+- CROPDMG: Damage to crop fields in US dollars.
+- CROPDMGEXP: the magnitude of the CROPDMG field.
+
+The magnitue fields are reported as K", "M" or "B" for thousands, millions or billions times the value reported in PROPDMG or CROPDMG. 
 
 The start and end dates for each event is turned into a datetime representation useful for processing. The hours and minutes of each event is stored in a separate column. Since that information is not material to this study, it is not processed and added to the datetime object.
 
