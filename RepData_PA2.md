@@ -160,4 +160,16 @@ ggplot(data.combined.top10, aes(x=reorder(Event, desc(Count)), y=Count, fill=Out
 
 ![](RepData_PA2_files/figure-html/publicimpactplot-1.png) 
 
-In the plot above, we can see that the top two causes of fatalities are tornado and excessive heat. The top two causes of injuries are tornado and tstm wind. The number of injuries with the top event, tornado, are 16.2 times that of fatalities. 
+In the plot above, we can see that the top two causes of fatalities are tornado and excessive heat. The top two causes of injuries are tornado and tstm wind. The tornado holds the top spot in both fatlities and injuries. With that event, the number of injuries are 16.2 times the number of fatalities. In fact, tornado account for 46.6% of all fatalities in the top 10 and 72.8% of all injuries in the top 10. It also accounts for 37.2% of all fatalities from weather events with fatalities and 65% of all injuries from weather events with fatalities.
+
+### Impact on Economic Loss
+
+#### Top 10 Causes of Economic Loss
+
+
+#### Plot comparing Fatalities and Injuries
+
+
+## Conclusion
+
+
