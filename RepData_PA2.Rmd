@@ -136,12 +136,123 @@ In the plot above, we can see that the top two causes of fatalities are `r tolow
 
 ### Impact on Economic Loss
 
-#### Top 10 Causes of Economic Loss
+To examine the economic loss, the damage must be calculated using the scale factor present in the data. Three new columns are created with the total property damage, total crop damage and total damage, which is the sum of the property and crop damage. 
+
+```{r calcdmg, cache=TRUE}
+multX <- function(dmgexp){
+    # Multiplers are capital. Make sure by converting to upper
+    dmgexp <- toupper(dmgexp)
+    
+    if (dmgexp == "K") 1000
+    else if (dmgexp == "M") 1000000
+    else if (dmgexp == "B") 1000000000
+    else 1
+}
+
+# Calculate the Property, Crop and Total damage
+data.noaa[ ,38] <- (data.noaa[ ,25] * sapply(data.noaa[ ,26], function(dmgexp) {multX(dmgexp)}))
+data.noaa[ ,39] <- (data.noaa[ ,27] * sapply(data.noaa[ ,28], function(dmgexp) {multX(dmgexp)}))
+data.noaa[ ,40] <- data.noaa[ ,38] + data.noaa[ ,39]
+colnames(data.noaa)[38] <- c("TOTALPRDMG")
+colnames(data.noaa)[39] <- c("TOTALCRDMG")
+colnames(data.noaa)[40] <- c("TOTALDMG")
+```
+
+In order to answer the second question, the amount of property, crop and total damage are calculated for each event type from the NOAA storm data. The data is sorted by amount of damage.
+
+```{r sortdmg}
+# Summarize the data for fatalities and injuries
+data.propdmg <- aggregate(data.noaa$TOTALPRDMG, by=list(data.noaa$EVTYPE), sum)
+data.cropdmg <- aggregate(data.noaa$TOTALCRDMG, by=list(data.noaa$EVTYPE), sum)
+data.totaldmg <- aggregate(data.noaa$TOTALDMG, by=list(data.noaa$EVTYPE), sum)
+
+# Rename the columns
+colnames(data.propdmg) <- c("Event","Amount")
+colnames(data.cropdmg) <- c("Event","Amount")
+colnames(data.totaldmg) <- c("Event","Amount")
+
+# Sort the data 
+data.propdmg.sorted <- arrange(data.propdmg, data.propdmg$Amount,
+                                  decreasing=TRUE)
+data.cropdmg.sorted <- arrange(data.cropdmg, data.cropdmg$Amount,
+                                  decreasing=TRUE)
+data.totaldmg.sorted <- arrange(data.totaldmg, data.totaldmg$Amount,
+                                  decreasing=TRUE)
+
+colnames(data.propdmg.sorted) <- c("Event","Amount")
+colnames(data.cropdmg.sorted) <- c("Event","Amount")
+colnames(data.totaldmg.sorted) <- c("Event","Amount")
 
 
-#### Plot comparing Fatalities and Injuries
+```
 
+Once we have the data summarized and sorted, we can derive top 10 lists of damage. 
+
+#### Top 10 Causes of Property Damage
+
+
+```{r propdmg10}
+data.propdmg.top10 <- head(data.propdmg.sorted, n=10)
+colnames(data.propdmg.top10) <- c("Event","Amount")
+data.propdmg.top10
+```
+
+#### Top 10 Causes of Crop Damage
+
+```{r cropdmg10}
+data.cropdmg.top10 <- head(data.cropdmg.sorted, n=10)
+colnames(data.cropdmg.top10) <- c("Event","Amount")
+data.cropdmg.top10
+```
+
+#### Top 10 Causes of Total Damage
+
+```{r totaldmg10}
+data.totaldmg.top10 <- head(data.totaldmg.sorted, n=10)
+colnames(data.totaldmg.top10) <- c("Event","Amount")
+data.totaldmg.top10
+```
+
+#### Plot comparing Crop and Property Damage
+
+Next, the top 10 amounts of property and crop damage are plotted side-by-side on the same chart to show the relative magnitude. 
+
+```{r damageplot1}
+# Add column to identify crop damage
+data.cropdmg.top10[ ,3] <- "Crop Damage"
+colnames(data.cropdmg.top10) <- c("Event","Amount", "Outcome")
+
+# Add column to identify property damage
+data.propdmg.top10[ ,3] <- "Property Damage"
+colnames(data.propdmg.top10) <- c("Event","Amount", "Outcome")
+
+# Combine fatalities and injuries into same data.frame
+data.combineddmg.top10 <- rbind(data.cropdmg.top10, data.propdmg.top10)
+
+ggplot(data.combineddmg.top10, aes(x=reorder(Event, desc(Amount)), y=Amount, fill=Outcome)) + 
+    geom_bar(stat="identity", position="dodge") +
+    labs(x="Event", y="Damage (USD)") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+    labs(title="Top 10 Causes of Property and Crop Damage\ndue to Severe Weather, 1950 - 2011")
+```
+
+In the plot above, we can see that the top two causes of property damage are `r tolower(data.propdmg.top10[1,1])` and `r tolower(data.propdmg.top10[2,1])`. The top two causes of crop damage are `r tolower(data.cropdmg.top10[1,1])` and `r tolower(data.cropdmg.top10[2,1])`. The `r tolower(data.totaldmg.top10[1,1])` holds the top spot in total damage. It is the top spot in property damange and second spot in crop damage. With that event, the amount of property damage is `r round(data.propdmg.top10[1,2]/data.cropdmg.top10[1,2],1)` times the amount of crop damage. In fact, `r tolower(data.propdmg.top10[1,1])` account for `r round( ((data.propdmg.top10[1,2]/sum(data.propdmg.top10[ ,2]))*100),1)`% of all property damage in the top 10 and `r round( ((data.cropdmg.top10[1,2]/sum(data.cropdmg.top10[ ,2]))*100),1)`% of all crop damage in the top 10. It also accounts for `r round( ((data.propdmg.top10[1,2]/sum(data.propdmg.sorted[ ,2]))*100),1)`% of all property damage from weather events and `r round( ((data.cropdmg.top10[1,2]/sum(data.cropdmg.sorted[ ,2]))*100),1)`% of all crop damage from weather events.
+
+#### Plot of Total Damage
+
+A plot is also constructed showing the top 10 total damage from severe weather events. 
+
+```{r}
+ggplot(data.totaldmg.top10, aes(x=reorder(Event, desc(Amount)), y=Amount)) + 
+    geom_bar(stat="identity", position="dodge",fill="#F35E5A") +
+    labs(x="Event", y="Damage (USD)") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+    labs(title="Top 10 Causes of Total Damage\ndue to Severe Weather, 1950 - 2011")
+```
+
+We can see that `r tolower(data.totaldmg.top10[1,1])` takes the top spot. From the section on fatalities and injuries, `r tolower(data.totaldmg.top10[3,1])` is in the third spot.  In terms of total property damage, `r tolower(data.totaldmg.top10[1,1])` accounts for  `r round( ((data.totaldmg.top10[1,2]/sum(data.totaldmg.top10[ ,2]))*100),1)`% of all property damage in the top 10 and `r round( ((data.totaldmg.top10[1,2]/sum(data.totaldmg.sorted[ ,2]))*100),1)`% of all damage. In addition, `r tolower(data.totaldmg.top10[3,1])` accounts for  `r round( ((data.totaldmg.top10[3,2]/sum(data.totaldmg.top10[ ,2]))*100),1)`% of all property damage in the top 10 and `r round( ((data.totaldmg.top10[3,2]/sum(data.totaldmg.sorted[ ,2]))*100),1)`% of all damage. The two events account for `r round( ((data.totaldmg.top10[3,2]/sum(data.totaldmg.sorted[ ,2]))*100)+((data.totaldmg.top10[1,2]/sum(data.totaldmg.sorted[ ,2]))*100),1)`% of all damage from severe weather events.
 
 ## Conclusion
 
+From the data in this report, we can see that tornado and flood are two very significant sources of loss in terms of fatalities, property and crop damage. The government could protect its citizens by investing in prediction and detection of tornados. This would allow people in the line of a tornado to get into a safe location. To protect against floods, the government should set policy that set aside land for flood plains and build levies capable of sustaining significant floods around lowlands.
 

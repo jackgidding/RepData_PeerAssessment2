@@ -175,12 +175,174 @@ In the plot above, we can see that the top two causes of fatalities are tornado 
 
 ### Impact on Economic Loss
 
-#### Top 10 Causes of Economic Loss
+To examine the economic loss, the damage must be calculated using the scale factor present in the data. Three new columns are created with the total property damage, total crop damage and total damage, which is the sum of the property and crop damage. 
 
 
-#### Plot comparing Fatalities and Injuries
+```r
+multX <- function(dmgexp){
+    # Multiplers are capital. Make sure by converting to upper
+    dmgexp <- toupper(dmgexp)
+    
+    if (dmgexp == "K") 1000
+    else if (dmgexp == "M") 1000000
+    else if (dmgexp == "B") 1000000000
+    else 1
+}
 
+# Calculate the Property, Crop and Total damage
+data.noaa[ ,38] <- (data.noaa[ ,25] * sapply(data.noaa[ ,26], function(dmgexp) {multX(dmgexp)}))
+data.noaa[ ,39] <- (data.noaa[ ,27] * sapply(data.noaa[ ,28], function(dmgexp) {multX(dmgexp)}))
+data.noaa[ ,40] <- data.noaa[ ,38] + data.noaa[ ,39]
+colnames(data.noaa)[38] <- c("TOTALPRDMG")
+colnames(data.noaa)[39] <- c("TOTALCRDMG")
+colnames(data.noaa)[40] <- c("TOTALDMG")
+```
+
+In order to answer the second question, the amount of property, crop and total damage are calculated for each event type from the NOAA storm data. The data is sorted by amount of damage.
+
+
+```r
+# Summarize the data for fatalities and injuries
+data.propdmg <- aggregate(data.noaa$TOTALPRDMG, by=list(data.noaa$EVTYPE), sum)
+data.cropdmg <- aggregate(data.noaa$TOTALCRDMG, by=list(data.noaa$EVTYPE), sum)
+data.totaldmg <- aggregate(data.noaa$TOTALDMG, by=list(data.noaa$EVTYPE), sum)
+
+# Rename the columns
+colnames(data.propdmg) <- c("Event","Amount")
+colnames(data.cropdmg) <- c("Event","Amount")
+colnames(data.totaldmg) <- c("Event","Amount")
+
+# Sort the data 
+data.propdmg.sorted <- arrange(data.propdmg, data.propdmg$Amount,
+                                  decreasing=TRUE)
+data.cropdmg.sorted <- arrange(data.cropdmg, data.cropdmg$Amount,
+                                  decreasing=TRUE)
+data.totaldmg.sorted <- arrange(data.totaldmg, data.totaldmg$Amount,
+                                  decreasing=TRUE)
+
+colnames(data.propdmg.sorted) <- c("Event","Amount")
+colnames(data.cropdmg.sorted) <- c("Event","Amount")
+colnames(data.totaldmg.sorted) <- c("Event","Amount")
+```
+
+Once we have the data summarized and sorted, we can derive top 10 lists of damage. 
+
+#### Top 10 Causes of Property Damage
+
+
+
+```r
+data.propdmg.top10 <- head(data.propdmg.sorted, n=10)
+colnames(data.propdmg.top10) <- c("Event","Amount")
+data.propdmg.top10
+```
+
+```
+##                Event       Amount
+## 1              FLOOD 144657709807
+## 2  HURRICANE/TYPHOON  69305840000
+## 3            TORNADO  56937160779
+## 4        STORM SURGE  43323536000
+## 5        FLASH FLOOD  16140812067
+## 6               HAIL  15732267048
+## 7          HURRICANE  11868319010
+## 8     TROPICAL STORM   7703890550
+## 9       WINTER STORM   6688497251
+## 10         HIGH WIND   5270046295
+```
+
+#### Top 10 Causes of Crop Damage
+
+
+```r
+data.cropdmg.top10 <- head(data.cropdmg.sorted, n=10)
+colnames(data.cropdmg.top10) <- c("Event","Amount")
+data.cropdmg.top10
+```
+
+```
+##                Event      Amount
+## 1            DROUGHT 13972566000
+## 2              FLOOD  5661968450
+## 3        RIVER FLOOD  5029459000
+## 4          ICE STORM  5022113500
+## 5               HAIL  3025954473
+## 6          HURRICANE  2741910000
+## 7  HURRICANE/TYPHOON  2607872800
+## 8        FLASH FLOOD  1421317100
+## 9       EXTREME COLD  1312973000
+## 10      FROST/FREEZE  1094186000
+```
+
+#### Top 10 Causes of Total Damage
+
+
+```r
+data.totaldmg.top10 <- head(data.totaldmg.sorted, n=10)
+colnames(data.totaldmg.top10) <- c("Event","Amount")
+data.totaldmg.top10
+```
+
+```
+##                Event       Amount
+## 1              FLOOD 150319678257
+## 2  HURRICANE/TYPHOON  71913712800
+## 3            TORNADO  57352114049
+## 4        STORM SURGE  43323541000
+## 5               HAIL  18758221521
+## 6        FLASH FLOOD  17562129167
+## 7            DROUGHT  15018672000
+## 8          HURRICANE  14610229010
+## 9        RIVER FLOOD  10148404500
+## 10         ICE STORM   8967041360
+```
+
+#### Plot comparing Crop and Property Damage
+
+Next, the top 10 amounts of property and crop damage are plotted side-by-side on the same chart to show the relative magnitude. 
+
+
+```r
+# Add column to identify crop damage
+data.cropdmg.top10[ ,3] <- "Crop Damage"
+colnames(data.cropdmg.top10) <- c("Event","Amount", "Outcome")
+
+# Add column to identify property damage
+data.propdmg.top10[ ,3] <- "Property Damage"
+colnames(data.propdmg.top10) <- c("Event","Amount", "Outcome")
+
+# Combine fatalities and injuries into same data.frame
+data.combineddmg.top10 <- rbind(data.cropdmg.top10, data.propdmg.top10)
+
+ggplot(data.combineddmg.top10, aes(x=reorder(Event, desc(Amount)), y=Amount, fill=Outcome)) + 
+    geom_bar(stat="identity", position="dodge") +
+    labs(x="Event", y="Damage (USD)") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+    labs(title="Top 10 Causes of Property and Crop Damage\ndue to Severe Weather, 1950 - 2011")
+```
+
+![](RepData_PA2_files/figure-html/damageplot1-1.png) 
+
+In the plot above, we can see that the top two causes of property damage are flood and hurricane/typhoon. The top two causes of crop damage are drought and flood. The flood holds the top spot in total damage. It is the top spot in property damange and second spot in crop damage. With that event, the amount of property damage is 10.4 times the amount of crop damage. In fact, flood account for 38.3% of all property damage in the top 10 and 33.4% of all crop damage in the top 10. It also accounts for 33.9% of all property damage from weather events and 28.5% of all crop damage from weather events.
+
+#### Plot of Total Damage
+
+A plot is also constructed showing the top 10 total damage from severe weather events. 
+
+
+```r
+ggplot(data.totaldmg.top10, aes(x=reorder(Event, desc(Amount)), y=Amount)) + 
+    geom_bar(stat="identity", position="dodge",fill="#F35E5A") +
+    labs(x="Event", y="Damage (USD)") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+    labs(title="Top 10 Causes of Total Damage\ndue to Severe Weather, 1950 - 2011")
+```
+
+![](RepData_PA2_files/figure-html/unnamed-chunk-1-1.png) 
+
+We can see that flood takes the top spot. From the section on fatalities and injuries, tornado is in the third spot.  In terms of total property damage, flood accounts for  36.8% of all property damage in the top 10 and 31.6% of all damage. In addition, tornado accounts for  14.1% of all property damage in the top 10 and 12% of all damage. The two events account for 43.6% of all damage from severe weather events.
 
 ## Conclusion
 
+From the data in this report, we can see that tornado and flood are two very significant sources of loss in terms of fatalities, property and crop damage. The government could protect its citizens by investing in prediction and detection of tornados. This would allow people in the line of a tornado to get into a safe location. To protect against floods, the government should set policy that set aside land for flood plains and build levies capable of sustaining significant floods around lowlands.
 
